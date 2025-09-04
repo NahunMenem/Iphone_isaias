@@ -1019,7 +1019,7 @@ def agregar_stock():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    categorias = ['Repuestos', 'Fundas', 'Cargadores', 'Auriculares']
+    categorias = ['Repuestos', 'Fundas', 'Cargadores', 'Auriculares','Celulares']
 
     # Obtener el término de búsqueda (si existe)
     busqueda = request.args.get('busqueda', '')
