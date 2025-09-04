@@ -20,9 +20,14 @@ app.secret_key = 'tu_clave_secreta_aqui'  # Necesario para usar sesiones
 # Configuración de la conexión a PostgreSQL
 import os
 import psycopg2
+import psycopg2.extras
 
 def get_db_connection():
-    conn = psycopg2.connect(os.environ["DATABASE_URL"])
+    # Usa DictCursor para que fetchone() y fetchall() devuelvan dicts
+    conn = psycopg2.connect(
+        os.environ["DATABASE_URL"],
+        cursor_factory=psycopg2.extras.RealDictCursor
+    )
     return conn
 
 # Crear tabla de usuarios si no existe
@@ -88,8 +93,9 @@ def index():
 # Ruta para el login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Si ya está autenticado, lo mando directo al inicio
     if 'username' in session:
-        return redirect(url_for('inicio'))  # Redirige a la página principal si ya está autenticado
+        return redirect(url_for('inicio'))
 
     if request.method == 'POST':
         username = request.form['username']
@@ -102,14 +108,16 @@ def login():
         conn.close()
 
         if user and user['password'] == password:
+            # Guardamos sesión
             session['username'] = user['username']
             session['role'] = user['role']
 
-            return redirect(url_for('inicio'))  # Redirige a la página principal después del login
+            return redirect(url_for('inicio'))
         else:
             flash('Usuario o contraseña incorrectos', 'error')
 
     return render_template('login.html')
+
 
 # Ruta para la página principal del sistema (después del login)
 @app.route('/inicio')
