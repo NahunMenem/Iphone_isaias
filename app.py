@@ -1014,6 +1014,8 @@ def cotizar():
     return render_template("cotizar.html")
 
 
+from flask import flash
+
 @app.route('/agregar_stock', methods=['GET', 'POST'])
 def agregar_stock():
     conn = get_db_connection()
@@ -1029,10 +1031,10 @@ def agregar_stock():
         if request.method == 'POST' and 'eliminar' in request.form:
             producto_id = request.form['producto_id']
 
-            # Desvincular producto de ventas antes de eliminar
             cursor.execute('UPDATE ventas_isaias SET producto_id = NULL WHERE producto_id = %s', (producto_id,))
             cursor.execute('DELETE FROM productos_isaias WHERE id = %s', (producto_id,))
             conn.commit()
+            flash("✅ Producto eliminado correctamente.", "success")
             return redirect(url_for('agregar_stock'))
 
         # Editar un producto
@@ -1066,6 +1068,7 @@ def agregar_stock():
                 ''', (nombre, codigo_barras, stock, precio, precio_costo, categoria, producto_id))
             
             conn.commit()
+            flash("✅ Producto editado correctamente.", "success")
             return redirect(url_for('agregar_stock'))
 
         # Agregar stock a un producto existente
@@ -1079,9 +1082,10 @@ def agregar_stock():
                 WHERE id = %s
             ''', (cantidad, producto_id))
             conn.commit()
+            flash("📦 Stock actualizado correctamente.", "success")
             return redirect(url_for('agregar_stock'))
 
-        # Agregar un nuevo producto (con imagen y categoría)
+        # Agregar un nuevo producto
         if request.method == 'POST' and 'agregar' in request.form:
             nombre = request.form['nombre'].upper()
             codigo_barras = request.form['codigo_barras']
@@ -1097,14 +1101,22 @@ def agregar_stock():
                     result = cloudinary.uploader.upload(foto)
                     foto_url = result['secure_url']
 
-            cursor.execute('''
-                INSERT INTO productos_isaias (nombre, codigo_barras, stock, precio, precio_costo, foto_url, categoria)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ''', (nombre, codigo_barras, stock, precio, precio_costo, foto_url, categoria))
-            conn.commit()
+            try:
+                cursor.execute('''
+                    INSERT INTO productos_isaias (nombre, codigo_barras, stock, precio, precio_costo, foto_url, categoria)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ''', (nombre, codigo_barras, stock, precio, precio_costo, foto_url, categoria))
+                conn.commit()
+                flash("✅ Producto agregado correctamente.", "success")
+            except Exception as e:
+                conn.rollback()
+                if "duplicate key value violates unique constraint" in str(e):
+                    flash("⚠️ El código de barras ya existe, por favor usa otro.", "danger")
+                else:
+                    flash(f"❌ Error al agregar producto: {str(e)}", "danger")
             return redirect(url_for('agregar_stock'))
 
-        # Obtener productos filtrados por búsqueda (si existe)
+        # Obtener productos filtrados por búsqueda
         if busqueda:
             cursor.execute('''
                 SELECT id, nombre, codigo_barras, stock, precio, precio_costo, foto_url
@@ -1119,10 +1131,10 @@ def agregar_stock():
 
     except Exception as e:
         conn.rollback()
-        return f"Error: {str(e)}"
+        flash(f"❌ Error inesperado: {str(e)}", "danger")
+        return redirect(url_for('agregar_stock'))
     finally:
         conn.close()
-
 
 
 @app.route('/tienda')
