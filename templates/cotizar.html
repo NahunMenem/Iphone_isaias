@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-8 bg-gray-800 rounded-2xl shadow-2xl">
+  <h1 class="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-2">
+    <i data-lucide="calculator"></i> Cotizar Reparación
+  </h1>
+
+  <!-- FLEX para Formulario y Resultado LADO A LADO -->
+  <div class="flex flex-col md:flex-row gap-8">
+    <!-- Formulario Cotizar Reparación -->
+    <div class="md:w-1/2 space-y-6">
+      <form id="formularioCotizar" class="space-y-6">
+        <div>
+          <label for="precioRepuesto" class="block mb-2">Precio del Repuesto ($)</label>
+          <input type="number" id="precioRepuesto" name="precioRepuesto" required class="w-full p-3 rounded bg-gray-700 border border-gray-600" placeholder="Ej: 20000">
+        </div>
+
+        <div>
+          <label for="cuotas" class="block mb-2">Elegir forma de pago</label>
+          <select id="cuotas" name="cuotas" required class="w-full p-3 rounded bg-gray-700 border border-gray-600">
+            <option value="efectivo">Efectivo</option>
+            <option value="3">3 cuotas</option>
+            <option value="6">6 cuotas</option>
+          </select>
+        </div>
+
+        <button type="button" onclick="calcularCotizacion()" class="w-full flex items-center justify-center gap-2 p-3 bg-primary-600 hover:bg-primary-700 rounded font-bold">
+          <i data-lucide="check-circle"></i> Calcular
+        </button>
+      </form>
+    </div>
+
+    <!-- Resultado Cotizar Reparación -->
+    <div id="resultadoCotizar" class="md:w-1/2 hidden text-center md:text-left space-y-4 bg-gray-700 p-6 rounded-lg">
+      <h2 class="text-2xl font-bold flex items-center gap-2 mb-4 justify-center md:justify-start">
+        <i data-lucide="badge-dollar-sign"></i> Resultado Reparación
+      </h2>
+      <p id="totalCobrar" class="text-lg font-bold"></p>
+      <p id="valorCuota" class="text-lg font-semibold"></p>
+      <p id="cantidadCuotas" class="text-lg font-semibold"></p>
+      <p id="descuentoEfectivo" class="text-lg font-bold text-green-400 flex items-center gap-2 justify-center md:justify-start"></p>
+    </div>
+  </div>
+
+  <!-- Nueva sección abajo para Producto con Tarjeta -->
+  <div class="mt-12">
+    <h2 class="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-2">
+      <i data-lucide="shopping-cart"></i> Producto con Tarjeta
+    </h2>
+
+    <div class="flex flex-col md:flex-row gap-8">
+      <!-- Formulario Producto -->
+      <div class="md:w-1/2 space-y-6">
+        <form id="formularioProducto" class="space-y-6">
+          <div>
+            <label for="precioProducto" class="block mb-2">Precio del Producto ($)</label>
+            <input type="number" id="precioProducto" name="precioProducto" required class="w-full p-3 rounded bg-gray-700 border border-gray-600" placeholder="Ej: 15000">
+          </div>
+
+          <div>
+            <label for="cuotasProducto" class="block mb-2">Cantidad de Cuotas</label>
+            <select id="cuotasProducto" name="cuotasProducto" required class="w-full p-3 rounded bg-gray-700 border border-gray-600">
+              <option value="3">3 cuotas</option>
+              <option value="6">6 cuotas</option>
+            </select>
+          </div>
+
+          <button type="button" onclick="calcularProducto()" class="w-full flex items-center justify-center gap-2 p-3 bg-primary-600 hover:bg-primary-700 rounded font-bold">
+            <i data-lucide="check-circle"></i> Calcular
+          </button>
+        </form>
+      </div>
+
+      <!-- Resultado Producto -->
+      <div id="resultadoProducto" class="md:w-1/2 hidden text-center md:text-left space-y-4 bg-gray-700 p-6 rounded-lg">
+        <h2 class="text-2xl font-bold flex items-center gap-2 mb-4 justify-center md:justify-start">
+          <i data-lucide="credit-card"></i> Resultado Producto
+        </h2>
+        <p id="totalProducto" class="text-lg font-bold"></p>
+        <p id="valorCuotaProducto" class="text-lg font-semibold"></p>
+        <p id="cantidadCuotasProducto" class="text-lg font-semibold"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function calcularCotizacion() {
+  const precioRepuesto = parseFloat(document.getElementById('precioRepuesto').value);
+  const cuotas = document.getElementById('cuotas').value;
+
+  if (isNaN(precioRepuesto)) {
+    alert("Por favor, ingresá el precio del repuesto.");
+    return;
+  }
+
+  let precioEfectivo = (precioRepuesto + 5000) * 2;
+  let mensaje = "";
+
+  if (cuotas === "efectivo") {
+    mensaje = `<i data-lucide="hand-coins"></i> <strong>Precio final en efectivo:</strong> $${precioEfectivo.toFixed(2)}`;
+    document.getElementById('valorCuota').innerHTML = "";
+    document.getElementById('cantidadCuotas').innerHTML = "";
+    document.getElementById('descuentoEfectivo').innerHTML = "";
+  } else if (cuotas === "3") {
+    let precioConRecargo = precioEfectivo * 1.25;
+    const valorPorCuota = precioConRecargo / 3;
+    mensaje = `<i data-lucide="credit-card"></i> <strong>Total con 25% de recargo:</strong> $${precioConRecargo.toFixed(2)}`;
+    document.getElementById('valorCuota').innerHTML = `<strong>Valor por cuota:</strong> $${valorPorCuota.toFixed(2)}`;
+    document.getElementById('cantidadCuotas').innerHTML = `<strong>Cantidad de cuotas:</strong> 3`;
+    document.getElementById('descuentoEfectivo').innerHTML = `<i data-lucide="ticket-percent"></i> <strong>Promo pago contado:</strong> $${precioEfectivo.toFixed(2)}`;
+  } else if (cuotas === "6") {
+    let precioConRecargo = precioEfectivo * 1.40;
+    const valorPorCuota = precioConRecargo / 6;
+    mensaje = `<i data-lucide="credit-card"></i> <strong>Total con 40% de recargo:</strong> $${precioConRecargo.toFixed(2)}`;
+    document.getElementById('valorCuota').innerHTML = `<strong>Valor por cuota:</strong> $${valorPorCuota.toFixed(2)}`;
+    document.getElementById('cantidadCuotas').innerHTML = `<strong>Cantidad de cuotas:</strong> 6`;
+    document.getElementById('descuentoEfectivo').innerHTML = "";
+  }
+
+  document.getElementById('totalCobrar').innerHTML = mensaje;
+  document.getElementById('resultadoCotizar').classList.remove('hidden');
+  lucide.createIcons();
+}
+
+function calcularProducto() {
+  const precioProducto = parseFloat(document.getElementById('precioProducto').value);
+  const cuotasProducto = document.getElementById('cuotasProducto').value;
+
+  if (isNaN(precioProducto)) {
+    alert("Por favor, ingresá el precio del producto.");
+    return;
+  }
+
+  let precioFinal = 0;
+  if (cuotasProducto === "3") {
+    precioFinal = precioProducto * 1.25;
+  } else if (cuotasProducto === "6") {
+    precioFinal = precioProducto * 1.40;
+  }
+
+  const valorPorCuota = precioFinal / parseInt(cuotasProducto);
+
+  document.getElementById('totalProducto').innerHTML = `<i data-lucide="dollar-sign"></i> <strong>Total a pagar:</strong> $${precioFinal.toFixed(2)}`;
+  document.getElementById('valorCuotaProducto').innerHTML = `<strong>Valor por cuota:</strong> $${valorPorCuota.toFixed(2)}`;
+  document.getElementById('cantidadCuotasProducto').innerHTML = `<strong>Cantidad de cuotas:</strong> ${cuotasProducto}`;
+  document.getElementById('resultadoProducto').classList.remove('hidden');
+  lucide.createIcons();
+}
+</script>
+{% endblock %}
+

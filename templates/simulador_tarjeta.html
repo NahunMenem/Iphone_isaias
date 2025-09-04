@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-xl mx-auto p-8 bg-gray-800 rounded-2xl shadow-2xl">
+  <h1 class="text-3xl font-bold mb-6 text-center flex items-center justify-center gap-2">
+    <i data-lucide="credit-card"></i> Simulador de Venta con Tarjeta
+  </h1>
+
+  <form id="formularioSimulador" class="space-y-6">
+    <div>
+      <label for="monto" class="block mb-2">Monto a Simular ($)</label>
+      <input type="number" id="monto" name="monto" required class="w-full p-3 rounded bg-gray-700 border border-gray-600" placeholder="Ej: 20000">
+    </div>
+
+    <div>
+      <label for="cuotas" class="block mb-2">Cantidad de Cuotas</label>
+      <select id="cuotas" name="cuotas" required class="w-full p-3 rounded bg-gray-700 border border-gray-600">
+        <option value="3">3 cuotas</option>
+        <option value="6">6 cuotas</option>
+        <option value="12">12 cuotas</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="interes" class="block mb-2">Interés (%)</label>
+      <input type="number" id="interes" name="interes" required class="w-full p-3 rounded bg-gray-700 border border-gray-600" placeholder="Ej: 10">
+    </div>
+
+    <button type="button" onclick="calcular()" class="w-full flex items-center justify-center gap-2 p-3 bg-primary-600 hover:bg-primary-700 rounded font-bold">
+      <i data-lucide="calculator"></i> Calcular
+    </button>
+  </form>
+
+  <div id="resultado" class="mt-8 hidden text-center">
+    <h2 class="text-xl font-semibold mb-4">Resultado:</h2>
+    <p id="totalCobrar" class="mb-2"></p>
+    <p id="valorCuota" class="mb-2"></p>
+    <p id="cantidadCuotas" class="mb-2"></p>
+  </div>
+</div>
+
+<script>
+function calcular() {
+  const monto = parseFloat(document.getElementById('monto').value);
+  const cuotas = parseInt(document.getElementById('cuotas').value);
+  const interes = parseFloat(document.getElementById('interes').value);
+
+  if (isNaN(monto) || isNaN(cuotas) || isNaN(interes)) {
+    alert("Por favor, complete todos los campos correctamente.");
+    return;
+  }
+
+  const montoConInteres = monto * (1 + (interes / 100));
+  const valorPorCuota = montoConInteres / cuotas;
+
+  document.getElementById('totalCobrar').textContent = `Total a cobrar: $${montoConInteres.toFixed(2)}`;
+  document.getElementById('valorCuota').textContent = `Valor de cada cuota: $${valorPorCuota.toFixed(2)}`;
+  document.getElementById('cantidadCuotas').textContent = `Cantidad de cuotas: ${cuotas}`;
+
+  document.getElementById('resultado').classList.remove('hidden');
+}
+</script>
+{% endblock %}

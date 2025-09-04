@@ -1,0 +1,296 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="p-6 bg-gray-900 text-white min-h-screen">
+    <h1 class="text-3xl font-bold text-center mb-8">Dashboard</h1>
+
+    <!-- Selector de fecha -->
+    <div class="mb-8 text-center">
+        <form action="{{ url_for('dashboard') }}" method="GET" class="inline-block">
+            <label for="fecha_desde" class="text-gray-300">Desde:</label>
+            <input type="date" id="fecha_desde" name="fecha_desde" value="{{ fecha_desde }}" class="ml-2 p-2 bg-gray-700 text-white rounded">
+            <label for="fecha_hasta" class="text-gray-300 ml-4">Hasta:</label>
+            <input type="date" id="fecha_hasta" name="fecha_hasta" value="{{ fecha_hasta }}" class="ml-2 p-2 bg-gray-700 text-white rounded">
+            <button type="submit" class="ml-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-300">Filtrar</button>
+        </form>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+        <!-- KPI: Reparaciones -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-center">
+            <h3 class="text-lg font-semibold text-gray-300">Reparaciones</h3>
+            <p class="text-2xl font-bold text-blue-400">${{ total_ventas_reparaciones }}</p>
+        </div>
+
+        <!-- KPI: Productos -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-center">
+            <h3 class="text-lg font-semibold text-gray-300">Productos</h3>
+            <p class="text-2xl font-bold text-green-400">${{ total_ventas_productos }}</p>
+        </div>
+
+        <!-- KPI: Ventas Totales -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-center">
+            <h3 class="text-lg font-semibold text-gray-300">Ventas Totales</h3>
+            <p class="text-2xl font-bold text-purple-400">${{ total_ventas }}</p>
+        </div>
+
+        <!-- KPI: Egresos -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-center">
+            <h3 class="text-lg font-semibold text-gray-300">Egresos</h3>
+            <p class="text-2xl font-bold text-red-400">-${{ total_egresos }}</p>
+        </div>
+
+        <!-- KPI: Costos -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-center">
+            <h3 class="text-lg font-semibold text-gray-300">Costos</h3>
+            <p class="text-2xl font-bold text-yellow-400">-${{ total_costo }}</p>
+        </div>
+
+        <!-- KPI: Ganancia Neta -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg text-center">
+            <h3 class="text-lg font-semibold text-gray-300">Ganancia Neta</h3>
+            <p class="text-2xl font-bold text-teal-400">${{ ganancia }}</p>
+        </div>
+    </div>
+
+    <!-- Evolución de Stock Mensual -->
+    <div class="mt-12">
+        <h2 class="text-3xl font-bold text-center mb-6">Evolución de Stock</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-gray-800 p-6 rounded-lg shadow text-center">
+                <div class="flex justify-center mb-2">
+                    <i data-lucide="dollar-sign" class="w-8 h-8 text-orange-400"></i>
+                </div>
+                <h2 class="text-xl text-gray-300">Total Stock (Costo)</h2>
+                <p class="text-3xl font-bold text-orange-400">${{ total_costo_stock }}</p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg shadow text-center">
+                <div class="flex justify-center mb-2">
+                    <i data-lucide="shopping-cart" class="w-8 h-8 text-green-400"></i>
+                </div>
+                <h2 class="text-xl text-gray-300">Total Stock (Venta)</h2>
+                <p class="text-3xl font-bold text-green-400">${{ total_venta_stock }}</p>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg shadow text-center">
+                <div class="flex justify-center mb-2">
+                    <i data-lucide="package-check" class="w-8 h-8 text-cyan-400"></i>
+                </div>
+                <h2 class="text-xl text-gray-300">Cantidad Total en Stock</h2>
+                <p class="text-3xl font-bold text-cyan-400">{{ cantidad_total_stock }}</p>
+            </div>
+        </div>
+    </div>
+
+<!-- Contenedor para los tres gráficos uno al lado del otro -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+
+    <!-- Gráfico de resumen -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-semibold mb-4">Resumen de Ventas y Gastos</h2>
+        <canvas id="resumenChart" class="w-full"></canvas>
+    </div>
+
+    <!-- Gráfico de dona -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-semibold mb-4">Distribución de Ventas</h2>
+        <canvas id="distribucionVentasChart" class="w-full"></canvas>
+    </div>
+
+    <!-- Gráfico de línea de ventas mensuales -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg cursor-pointer" onclick="abrirModal('ventasMensualesChart')">
+        <h2 class="text-2xl font-semibold mb-4">Ventas Totales Mensuales</h2>
+        <canvas id="ventasMensualesChart" class="w-full"></canvas>
+    </div>
+
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg cursor-pointer" onclick="abrirModal('ventasSemanalesChart')">
+
+        <h2 class="text-2xl font-semibold mb-4">Ventas Totales Semanales</h2>
+        <canvas id="ventasSemanalesChart" class="w-full"></canvas>
+    </div>
+
+
+    <!-- Botón para volver al inicio -->
+    <div class="mt-8 text-center">
+        <a href="{{ url_for('index') }}" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-300">
+            Volver al Inicio
+        </a>
+    </div>
+</div>
+
+<script>
+    // Gráfico de resumen
+    const dataResumen = {
+        labels: ['Ventas', 'Egresos', 'Costos', 'Ganancia Neta'],
+        datasets: [{
+            label: 'Resumen',
+            data: [{{ total_ventas }}, {{ total_egresos }}, {{ total_costo }}, {{ ganancia }}],
+            backgroundColor: [
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(153, 102, 255, 0.2)'
+            ],
+            borderColor: [
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 99, 132, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(153, 102, 255, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(document.getElementById('resumenChart'), {
+        type: 'bar',
+        data: dataResumen,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: 'white' },
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                },
+                x: {
+                    ticks: { color: 'white' },
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                }
+            },
+            plugins: {
+                legend: { labels: { color: 'white' } }
+            }
+        }
+    });
+
+    // Gráfico de distribución de ventas
+    const dataDistribucion = {
+        labels: {{ distribucion_ventas | map(attribute='tipo') | list | tojson }},
+        datasets: [{
+            label: 'Distribución de Ventas',
+            data: {{ distribucion_ventas | map(attribute='total') | list | tojson }},
+            backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 99, 132, 0.2)'],
+            borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(document.getElementById('distribucionVentasChart'), {
+        type: 'doughnut',
+        data: dataDistribucion,
+        options: {
+            plugins: {
+                legend: { labels: { color: 'white' } }
+            }
+        }
+    });
+
+    // Gráfico de ventas mensuales
+    const ventasLabels = {{ ventas_mensuales | map(attribute='mes') | list | tojson }};
+    const ventasData = {{ ventas_mensuales | map(attribute='total') | list | tojson }};
+
+    new Chart(document.getElementById('ventasMensualesChart'), {
+        type: 'line',
+        data: {
+            labels: ventasLabels,
+            datasets: [{
+                label: 'Ventas Totales ($)',
+                data: ventasData,
+                borderColor: 'rgb(34, 197, 94)',
+                backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: 'white' } }
+            },
+            scales: {
+                x: { ticks: { color: 'white' } },
+                y: { ticks: { color: 'white' }, beginAtZero: true }
+            }
+        }
+    });
+</script>
+<script>
+    const ventasSemanalesLabels = {{ ventas_semanales | map(attribute='semana') | list | tojson }};
+    const ventasSemanalesData = {{ ventas_semanales | map(attribute='total') | list | tojson }};
+
+    new Chart(document.getElementById('ventasSemanalesChart'), {
+        type: 'line',
+        data: {
+            labels: ventasSemanalesLabels,
+            datasets: [{
+                label: 'Ventas Semanales ($)',
+                data: ventasSemanalesData,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: 'white' } }
+            },
+            scales: {
+                x: { ticks: { color: 'white' } },
+                y: { ticks: { color: 'white' }, beginAtZero: true }
+            }
+        }
+    });
+</script>
+<!-- Modal genérico reutilizable -->
+<div id="modalGrafico" class="fixed inset-0 z-50 hidden bg-black bg-opacity-70 flex items-center justify-center">
+  <div class="bg-gray-900 rounded-lg shadow-lg p-6 w-full max-w-5xl relative">
+    <button onclick="cerrarModal()" class="absolute top-2 right-2 text-white text-xl">&times;</button>
+    <canvas id="canvasModal" class="w-full h-[400px] md:h-[600px]"></canvas>
+  </div>
+</div>
+<script>
+let chartModal = null;
+
+function abrirModal(chartIdOriginal) {
+    const original = document.getElementById(chartIdOriginal);
+    const modal = document.getElementById("modalGrafico");
+    const canvasModal = document.getElementById("canvasModal");
+
+    // Mostrar modal
+    modal.classList.remove("hidden");
+
+    // Clonar datos y tipo
+    const configOriginal = Chart.getChart(original).config;
+    if (chartModal) chartModal.destroy(); // destruir gráfico anterior si lo hay
+
+    chartModal = new Chart(canvasModal, {
+        type: configOriginal.type,
+        data: JSON.parse(JSON.stringify(configOriginal.data)),
+        options: {
+            ...configOriginal.options,
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: 'white' } }
+            },
+            scales: {
+                x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                y: { ticks: { color: 'white' }, beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }
+            }
+        }
+    });
+}
+
+function cerrarModal() {
+    document.getElementById("modalGrafico").classList.add("hidden");
+    if (chartModal) {
+        chartModal.destroy();
+        chartModal = null;
+    }
+}
+</script>
+
+
+{% endblock %}

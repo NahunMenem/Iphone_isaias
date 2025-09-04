@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Comprobante</title>
+  <style>
+    @media print {
+      body {
+        width: 80mm;
+      }
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 15px;
+      width: 80mm;
+      padding: 2mm;
+      color: #000;
+    }
+
+    .center { text-align: center; }
+
+    .logo {
+      width: 75px;
+      height: auto;
+      margin-bottom: 6px;
+    }
+
+    .separador {
+      border-top: 1px dashed #000;
+      margin: 8px 0;
+    }
+
+    .datos p {
+      margin-bottom: 8px;
+    }
+
+    .patron {
+      font-family: monospace;
+      font-size: 16px;
+      line-height: 1.2;
+      text-align: center;
+      margin: 6px 0;
+    }
+
+    .nota {
+      font-size: 13px;
+      text-align: justify;
+    }
+
+    .checklist {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .firmas {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+
+    .firma {
+      width: 48%;
+      border-top: 1px solid #000;
+      text-align: center;
+      font-size: 13px;
+      padding-top: 4px;
+    }
+  </style>
+</head>
+<body onload="window.print()">
+
+  <div class="center">
+    <img src="/static/logo.png" class="logo">
+    <div><strong>IPHONE ISAIAS</strong></div>
+    <div>Direccion:</div>
+    <div>Cel: 3804566491 - La Rioja</div>
+  </div>
+
+  <div class="separador"></div>
+
+  <div class="datos">
+    <p><strong>Cliente:</strong> {{ equipo.nombre_cliente }}</p>
+    <p><strong>Marca:</strong> {{ equipo.marca }} / {{ equipo.modelo }}</p>
+    <p><strong>IMEI:</strong> ....................................</p>
+
+    <p><strong>Patrón:</strong></p>
+    <div class="patron">
+<pre>
+○   ○   ○
+○   ○   ○
+○   ○   ○
+</pre>
+    </div>
+    <p class="center" style="font-size: 13px;">Dibuje el patrón de desbloqueo</p>
+
+    <p><strong>Teléfono:</strong> {{ equipo.telefono }}</p>
+    <p><strong>Reparación:</strong> {{ equipo.tipo_reparacion }}</p>
+    <p><strong>Precio:</strong> ${{ "%.2f"|format(equipo.monto) }}</p>
+    <p><strong>Fecha:</strong> {{ equipo.fecha }}</p>
+    <p><strong>Orden N°:</strong> {{ equipo.nro_orden }}</p>
+
+    {% if equipo.observaciones %}
+    <p><strong>Observaciones:</strong> {{ equipo.observaciones }}</p>
+    {% endif %}
+  </div>
+
+  <div class="separador"></div>
+
+  <p class="nota">
+    Para retirar su equipo debe presentar este comprobante. Pasados 30 días se considera abandonado (art. 2575, 2525, 2562 CC).
+    No nos responsabilizamos si el equipo ingresa mojado o golpeado.
+    IMPORTANTE: Si el equipo entra mojado o con daño físico, no tiene garantía.
+  </p>
+
+  <div class="firmas">
+    <div class="firma">
+      Cliente<br>
+      {% if equipo.firma_cliente %}
+        <img src="{{ equipo.firma_cliente }}" alt="Firma del cliente" style="width:100%; max-height:60px; object-fit:contain;">
+      {% endif %}
+    </div>
+    <div class="firma">Encargado</div>
+  </div>
+
+
+</body>
+</html>
