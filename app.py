@@ -1162,7 +1162,7 @@ def tienda():
     productos = cursor.fetchall()
 
     cursor.execute('SELECT DISTINCT categoria FROM productos_isaias WHERE categoria IS NOT NULL ORDER BY categoria')
-    categorias = [row[0] for row in cursor.fetchall()]
+    categorias = [row['categoria'] for row in cursor.fetchall()]
 
     conn.close()
     return render_template('tienda.html', productos=productos, categorias=categorias, categoria_seleccionada=categoria)
